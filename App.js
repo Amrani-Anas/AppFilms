@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import axios from 'axios';
-import { StyleSheet, Text, View,Image,  TextInput, ScrollView, TouchableHighlight } from 'react-native';
+import { StyleSheet, Text, View,Image, Modal,  TextInput, ScrollView, TouchableHighlight } from 'react-native';
 
 export default function App() {
   const apiUrl = "http://www.omdbapi.com/?i=tt3896198&apikey=b2b463b9"
@@ -19,7 +19,15 @@ export default function App() {
       })
     })
   }
- 
+ const openPopup = id => {
+  axios(apiUrl + "&i=" + id).then(({data}) => {
+    let result = data; 
+    console.log(result);
+    setState(prevState => {
+      return{...prevState, selected: result}
+    });
+  });
+ }
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Find Movies </Text>
@@ -33,7 +41,10 @@ export default function App() {
       />
       <ScrollView style={styles.results}>
         {state.results.map(result => (
-       
+            <TouchableHighlight
+            key={result.imdbID}
+            onPress={() => openPopup(result.imdbID)}
+            >
           <View  style={styles.result}>
               <Text style={styles.heading}>{result.Title}</Text>
               <Image
@@ -44,11 +55,27 @@ export default function App() {
               }}
               resizeMode="cover"
               />
-              <Text style={styles.heading}>Rating : 7.2 </Text>
+              
           </View>
-          
+          </TouchableHighlight>
         ))}       
       </ScrollView>
+      <Modal
+      animationType="fade"
+      transparent={false}
+      visible={(typeof state.selected.Title != "undefined" ? true : false)}
+      >
+        <View style={styles.popup}>
+          <Text style={styles.popuptitle}>{state.selected.Title}</Text>
+          <Text style={{marginBottom: 20}}>Rating : {state.selected.imdbRating}</Text>
+            <Text>{state.selected.Plot}</Text>    
+        </View>
+        <TouchableHighlight onPress={() => setState(prevState => {
+          return{...prevState, selected: {}}
+        })}>
+            <Text style={styles.closebtn}>Go back </Text>
+        </TouchableHighlight>
+      </Modal>
     </View>
   );
 }
@@ -92,5 +119,20 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     padding: 20, 
     backgroundColor: '#445565'
+  },
+  popup: {
+    padding: 20
+  },
+  popuptitle: {
+    fontSize: 24, 
+    fontWeight: '700',
+    marginBottom: 5
+  }, 
+  closebtn: {
+    padding: 20,
+    fontSize: 20, 
+    color: '#FFF',
+    fontWeight: '700',
+    backgroundColor: '#2484C4'
   }
 });
